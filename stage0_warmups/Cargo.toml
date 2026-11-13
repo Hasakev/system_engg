@@ -1,0 +1,9 @@
+[package]
+name = "warmups"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Standard library only. Every stage adds dependencies only when the thing
+# being learned is not the thing the dependency does.
+[dependencies]
