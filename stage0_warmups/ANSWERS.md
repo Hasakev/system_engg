@@ -28,11 +28,33 @@ why? If print_len had to keep the string after returning, would &String work, an
 
 if print_len had to keep the string after returning we could not use &String, since &string is a borrow pointing to the original address.
 
-> it fails not because &string is a borrow pointing to the original address, but because it can't keep the bytes alive, when main is dead, i.e. ownership is returned, then main dies, so \[h e l l o\] dies.
+> it fails not because &string is a borrow pointing to the original address, but because it can't keep the bytes alive as s is simply borrowed, s then goes out of scope (i.e. reaches the end of its block and is dropped), so \[h e l l o\] dies.
 For print_len function to take ownership, it would need to take s: String. However what that means is that main would no longer be able to use s again, and the print function would fail since main no longer has ownership.
-3. third
 
 ### b2 push while borrowed
+
+prediction: v gets assigned initially, then first borrows v:
+v = *n = [ 1 2 3 ]
+first borrows v:
+first -> n address 
+n address relocates to expand array size.
+first still point to old address
+print gets cooked
+
+v tries to push 4, but because *first* is still borrowing v, it fails
+
+error comes up on the line 12.
+
+reality: a mutable borrow occurs here error happens. If first wasn't around this would work, because v is mutable, however because first uses &v[0], v becomes immutable as we have borrowed v, hence it gets cooked
+
+fix: do the mutable change before the immutable assingmenta i.e. print before pushing, another method is simply, instead of point to the address of first, we can just get first to become v\[0\], a copy. first then lives as an int on the stack, popped off the stack when the scope ends i.e. main hits }, v is also freed, when the system ends.
+ 
+C is cooked because what happens is that the nothing stops the expansion, the pointer to first dangles and so if you call for it you potentially get garbage from another item stored in that address.
+
+the heap expands, because 1. something else might fall after this heap i.e. address = 0x1000, 0x1004, 0x1008, 0x100C, then address 11 something else is there. so we need to find a new block somewhere that its 4. once it's copied over you nede to free the old block and point the new pointer to it. 
+
+So if someone else comes along and tries to access first, they still point to the old address and rubbish
+
 
 ### b3 dangling
 
