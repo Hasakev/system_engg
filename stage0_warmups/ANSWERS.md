@@ -57,6 +57,20 @@ So if someone else comes along and tries to access first, they still point to th
 
 
 ### b3 dangling
+prediction: text points to some string bytes "hello\nworld". not sure what unwrap_or does. but essentially it will throw an error because upper is within the context of the first_line_upper function, and so when the function reaches }, it disppears, note we haven't returned anything, and so the function will fail.
+
+result: it seems like the upper.lines.next().unwrap_or("") function returns something to the main caller. (return is not needed in the rust language). However, upper is owned by the function and so if first_line_upper finishes at }, the memory of upper gets cleared, and the caller, main, can no longer access the borrowed value. To fix this, we need to make main take ownership of upper. 
+
+1. What type is the value upper.lines().next().unwrap_or(""), and does it own its bytes?
+type is &str, it does no own the bytes, upper does
+2. What does putting ; after it do?
+putting a ; after it, turns a &str type to a () type because it converts it to a statement.
+3. What method turns that value into something that owns its bytes?
+we need to assign the value of the first line upper to a new owned object that is stored in the heap.
+
+Your fix allocates a second heap block and copies 5 bytes. The original broken version tried to avoid that copy. Is there any signature where returning a &str would be fine? Hint: what if the slice pointed into text instead of upper? Who owns text's bytes, and how long do they live?
+
+text is owned by main, so if i view into text, that's fine. However, if i want to manipulate text, that's another story, when i run the to_uppercase function, it creates a new variableon the heap that get removed when the function dies, so the results need to be in an owned string to pass it back, and so I can't do that operation, i need to make a new object to do this, hence we had upper allocated in the helper function. Therefore, we cannot get first_line_upper by using &text since we are just viewing it.
 
 ### b4 missing lifetime
 

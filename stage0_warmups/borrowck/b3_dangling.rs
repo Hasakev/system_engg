@@ -3,10 +3,16 @@
 // Predict the error, then compile. Where does `upper` live, and when is it
 // freed? Fix it by changing the return type so the caller owns the result.
 
-fn first_line_upper(text: &str) -> &str {
+fn first_line_upper(text: &str) -> String {
     let upper = text.to_uppercase();
-    upper.lines().next().unwrap_or("")
+    upper.lines().next().unwrap_or("").to_string()
+
+    // let and return
+    // let owner: String = upper.lines().next().unwrap_or("").to_string();
+    // owner
+
 }
+
 
 fn main() {
     println!("{}", first_line_upper("hello\nworld"));
