@@ -73,6 +73,46 @@ Your fix allocates a second heap block and copies 5 bytes. The original broken v
 text is owned by main, so if i view into text, that's fine. However, if i want to manipulate text, that's another story, when i run the to_uppercase function, it creates a new variableon the heap that get removed when the function dies, so the results need to be in an owned string to pass it back, and so I can't do that operation, i need to make a new object to do this, hence we had upper allocated in the helper function. Therefore, we cannot get first_line_upper by using &text since we are just viewing it.
 
 ### b4 missing lifetime
+prediction: if it was c or python, this function looks completely fine. my prediction is that it will fail because the compiler can not see a confirmed termination because the conditional is hiding it. To fix this, we simply remove the else part so that b returns if the conditional fails.
+
+actual: something to do with a "lifetime parameter", the signature does not like whether it is borrowed from a or from b.
+
+```rust
+error[E0106]: missing lifetime specifier
+ --> borrowck/b4_missing_lifetime.rs:7:43
+  |
+7 | fn pick(a: &str, b: &str, use_a: bool) -> &str {
+  |            ----     ----                  ^ expected named lifetime parameter
+  |
+  = help: this function's return type contains a borrowed value, but the signature does not say whether it is borrowed from `a` or `b`
+help: consider introducing a named lifetime parameter
+  |
+7 | fn pick<'a>(a: &'a str, b: &'a str, use_a: bool) -> &'a str {
+  |        ++++     ++          ++                       ++
+```
+This seems to be a rust identifier to group items that are alike, but may not be able to be intepreted by the compiler. This feels like a generic and we are essentially ensuring that a and b are in the same set, and a return from that set is guaranteed.
+
+Correction - it's not about typing - it's again about checking for instances where a reference may outlaive the original data. In this case, \'direction ensures that the value outputted for pick, i.e. r, lives on until either a or b (which are bth labelled \'direction) are killed, such that when a or b dies, using r after  that point is a compile error. The labelling let's the compiler know that it's guaranteed that r comes from either a or b, so r canno outlive b.
+
+Why fn first (a: &str) -> &str, does not need annotation?
+the solver knows for sure that `a` is borrowed, hence a lifetime paramter is not necessary, since there is only one candidate. 
+
+fun fact: the compiler actually fills the lifetime for you: lifetime elision:
+
+```rust
+// u read this:
+fn first(a: &str) -> &str
+
+//compiler sees this:
+fn <'x>first(a: &'x str) -> &'x str
+```
+
+Additional note: lifetimes, only exist for references, or types that contain references. Owned values do not take lifetime annotations, since the entire purpose is to restrict dangling reference points.
+
+▎ Would fn label(a: &str, n: i32) -> &str need a lifetime annotation? Why or why not?
+
+it's simple, the return is looking for a reference (whatever the type aka if it was &i132 it would need a lifetime), and there is only 1 candidate for that, a, hence a lifetime is not necessay
+
 
 ### b5 mutate while iterating
 

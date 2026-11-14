@@ -4,7 +4,7 @@
 // `help:` section. Fix the signature. Then explain in ANSWERS.md why
 // `fn first(a: &str) -> &str` needs no annotation but this function does.
 
-fn pick(a: &str, b: &str, use_a: bool) -> &str {
+fn pick<'direction>(a: &'direction str, b: &'direction str, use_a: bool) -> &'direction str {
     if use_a {
         a
     } else {
