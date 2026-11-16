@@ -116,6 +116,18 @@ it's simple, the return is looking for a reference (whatever the type aka if it 
 
 ### b5 mutate while iterating
 
+prediction: python let's you append to a list, because it has dynamic arrays/memory.Rust **does** have dynamic arrays and memory, which is what a Vector is, however, it rejects mutation while &v is borrowed, as it fails the ownership test, which could potentially results in a use-after-free issue i.e. in the middle of the loop, an operation frees the list's old block for reallocation, i.e. we allocate more memory to the list, by moving it's address, we then have a dangling reference., we know that when you adjust a mutable vector, i.e. push something to it, you need to allocate new memory for it (if len == cap). Hence, the push function affects the borrowing rules - you cannot push based on a reference i.e. &v view.
+
+outcome: this for loop borrows 'v' immutably preventing mutation within its body - as expected, because we are borrowing v, it prevents mutation.
+
+attempt: the error checker suggests an index-based loop, or collecting modifications into a separate collection. I'm going to try index-based. - this could work? not going to explore further as the problem asks me to make a new vec
+
+attempt 2: have a new vec observe and take objects from v (dereferenced), then new_v memory to v.
+
+> would `v = new_v;` compile inside the loop?
+
+Nope, you cannot mutate v while v is being borrowed!
+
 ### b6 move out of borrow
 
 ## e01 ownership
