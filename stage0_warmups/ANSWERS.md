@@ -130,6 +130,29 @@ Nope, you cannot mutate v while v is being borrowed!
 
 ### b6 move out of borrow
 
+Prediction: the code looks fine in my eyes, but i realised that job is borrowed! this means that the attempts cannot be incremented. Hence, we will get an error trying to iterate job.attempts. Moreover, when we assign name (in Job), to name (the variable), Job gets cooked as it gets it's ownership of the string stolen, but nothing to replace it (that still holds "String" true), so I think an error will happen there too.
+
+Actual: so it seems the attempts is fine, because we are just modifying job's value directly (&mut allows for this). the error stems from us attempting to move job.name to the variable `name`. To counter this, intuitively you could just use `.clone()` but this is banned. Instead, I am going to "take" from the std:mem library that leaves name as the default of String, which I presume is ""
+
+> Why does Rust refuse job.name (moving out) even though you return straight away and never read job.name inside take_name? 
+
+The reason why Rust refuses moving job.name out immediately, is because Job gets dropped at the end of main. This means ownership is never lost, and Job must remain "complete" - take guarantees this by ensuring job.name is a String (""). If we were to allow name = job.name directly, job would be with a stale header pointer at bytes `name` now owns, so dropping job would free those bytes a second time (double free)
+
+## borrowck summary
+
+| Puzzle | Rule | Bug it prevents |
+|---|---|---|
+| b1 | A move transfers ownership; the old variable is unusable | use-after-free, double free |
+| b2 | No `&mut` while a `&` is alive | dangling pointer after reallocation |
+| b3 | Can't return a view of a local | dangling return value |
+| b4 | Signatures say which input a returned reference borrows from | caller-side dangling |
+| b5 | Same as b2, inside a loop | iterator invalidation |
+| b6 | Can't move out from behind a reference; swap instead | double free |
+
+All one idea: every heap block has exactly one owner, and no reference outlives it.
+
+
+
 ## e01 ownership
 
 ## e02 slices

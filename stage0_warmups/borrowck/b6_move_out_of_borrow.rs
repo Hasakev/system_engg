@@ -6,6 +6,8 @@
 //
 // Fix it WITHOUT `.clone()`: leave an empty String behind. See `std::mem`.
 
+use std::mem;
+
 struct Job {
     name: String,
     attempts: u32,
@@ -13,11 +15,19 @@ struct Job {
 
 fn take_name(job: &mut Job) -> String {
     job.attempts += 1;
-    job.name
+    mem::take(&mut job.name)
+    // let steal_name = mem::take(&mut job.name);
+    // steal_name
 }
 
 fn main() {
-    let mut job = Job { name: String::from("backup"), attempts: 0 };
+    let mut job = Job {
+        name: String::from("backup"),
+        attempts: 0,
+    };
     let name = take_name(&mut job);
-    println!("took {name:?}, left {:?}, attempts {}", job.name, job.attempts);
+    println!(
+        "took {name:?}, left {:?}, attempts {}",
+        job.name, job.attempts
+    );
 }
